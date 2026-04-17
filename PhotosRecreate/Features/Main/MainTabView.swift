@@ -20,7 +20,7 @@ struct MainTabView: View {
             }
             
             Tab(role: .search){
-                Text("Search Page")
+                Text("Coming Soon! :)")
             }
         }
     }
