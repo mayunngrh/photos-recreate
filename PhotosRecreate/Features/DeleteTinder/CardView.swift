@@ -46,7 +46,6 @@ struct CardView: View {
         DragGesture()
             .onChanged { value in
                 dragOffset = value.translation
-                
                 withAnimation(.easeInOut(duration: 0.2)) {
                     if value.translation.height < -30 {
                         overlayType = .maybe
