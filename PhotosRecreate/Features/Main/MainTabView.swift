@@ -19,6 +19,10 @@ struct MainTabView: View {
                 CollectionView()
             }
             
+            Tab("Delete System", systemImage: "photo.stack") {
+                SwipeCardView()
+            }
+            
             Tab(role: .search){
                 Text("Coming Soon! :)")
             }
