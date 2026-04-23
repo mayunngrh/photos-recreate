@@ -47,7 +47,6 @@ struct PhotoView: View {
                 }
             
                 .onTapGesture {
-                    
                     if isSelectMode {
                         image.isSelected.toggle()
                     } else {
@@ -59,50 +58,10 @@ struct PhotoView: View {
                         .presentationDragIndicator(.visible)
                 }
         }
+        
+        
+    }
     
-    else {
-        Image(image.name)
-            .resizable()
-            .aspectRatio(1, contentMode:.fill)
-            .clipped()
-            .cornerRadius(4)
-            .opacity(image.isSelected ? 0.3 : 1)
-            .overlay(alignment: .bottomTrailing){
-                
-                if image.isSelected {
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue)
-                            .stroke(Color.white, lineWidth: 2)
-                            .frame(width: 20, height: 20)
-                            .offset(x: -10,y: -10)
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(.white)
-                            .frame(width: 10, height: 10)
-                            .font(.system(size: 10, weight: .bold))
-                            .offset(x: -10,y: -10)
-                    }
-                }
-                
-            }
-        
-            .onTapGesture {
-                
-                if isSelectMode {
-                    image.isSelected.toggle()
-                } else {
-                    presentImage = true
-                }
-                
-            }.fullScreenCover(isPresented: $presentImage) {
-                ImagePopUpView(imageId: $image.name, isPresented: $presentImage, image: $image)
-                    .presentationDragIndicator(.visible)
-            }
-    }
-
-        
-    }
-
 }
 
 struct GalleryView: View {
@@ -135,16 +94,14 @@ struct LibraryView: View {
     @Binding var isSelectMode: Bool
     @Binding var selectedImageData: [ImageModel]
     @Environment(\.modelContext) var databaseContext
-    
     @Query var items: [ImageModel]
     
-
-
+    
     var body: some View {
         NavigationStack{
-                ScrollView{
-                    GalleryView(gallery: $gallery, isSelectMode: $isSelectMode, selectedImageData: $selectedImageData)
-                }
+            ScrollView{
+                GalleryView(gallery: $gallery, isSelectMode: $isSelectMode, selectedImageData: $selectedImageData)
+            }
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading){
@@ -154,11 +111,11 @@ struct LibraryView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing){
                     Menu {
-                      
-                            Button("Sort by Recently Added", action: {
-                                
-                                }
-                            )
+                        
+                        Button("Sort by Recently Added", action: {
+                            
+                        }
+                        )
                         
                         Button("Sort by Date Captured", action: {})
                         Divider()
@@ -166,26 +123,37 @@ struct LibraryView: View {
                         Button("Personal Library", action: {})
                         Button("Shared Library", action: {})
                         Divider()
-                        Button("Filter", action: {})
+                        Button("Advanced Delete", action: {
+                            let selectedImageDatapp: [ImageModel] =
+                            gallery.filter { image in
+                                image.isSelected
+                            }
+                            
+                            let selectedImageId: [UUID] = selectedImageDatapp.map(\.id)
+
+                            
+                            // nanti kirim ini aja ke tempat uselectedImageId
+                            
+                            
+                        })
                         Button("Delete", action: {
                             
-                            var selectedImageDatapp: [ImageModel] =
-                                gallery.filter { image in
-                                    image.isSelected
-                                }
+                            let selectedImageDatapp: [ImageModel] =
+                            gallery.filter { image in
+                                image.isSelected
+                            }
                             
-    
                             for item in selectedImageDatapp{
                                 if let index = gallery.firstIndex(of: item) {
                                     gallery.remove(at: index)
                                     databaseContext.delete(item)
                                 }
                             }
-                                        
+                            
                         })
                         
-
-   
+                        
+                        
                     }
                     label: {
                         Label("Options", systemImage: "line.3.horizontal.decrease")
@@ -196,7 +164,7 @@ struct LibraryView: View {
                 ToolbarItemGroup(placement: .topBarTrailing){
                     if isSelectMode {
                         Image(systemName: "xmark").onTapGesture {
-                        isSelectMode.toggle()
+                            isSelectMode.toggle()
                             gallery.indices.forEach { index in
                                 gallery[index].isSelected = false
                             }
@@ -207,12 +175,12 @@ struct LibraryView: View {
                             isSelectMode.toggle()
                             print(isSelectMode)
                         }
-                      
+                        
                     }
                     
-                   
-
-  
+                    
+                    
+                    
                 }
             }.navigationTitle("Hello, world!")
                 .navigationSubtitle("Subtitle")
@@ -221,22 +189,22 @@ struct LibraryView: View {
         .onChange(of: selectedItem) { _, _ in
             print("close")
             Task {
-                    if !selectedItem.isEmpty{
-                        for item in selectedItem {
-                            if let data = try? await item.loadTransferable(type: Data.self) {
-                                let newImage = ImageModel(name: UUID().uuidString, imageData: data)
-                                databaseContext.insert(newImage)
-                                gallery.append(newImage)
-                                print(databaseContext.insert(newImage))
-                            }
+                if !selectedItem.isEmpty{
+                    for item in selectedItem {
+                        if let data = try? await item.loadTransferable(type: Data.self) {
+                            let newImage = ImageModel(name: UUID().uuidString, imageData: data)
+                            databaseContext.insert(newImage)
+                            gallery.append(newImage)
+                            print(databaseContext.insert(newImage))
                         }
                     }
+                }
                 selectedItem.removeAll()
             }
-             }
         }
     }
-    
+}
+
 
 
 
