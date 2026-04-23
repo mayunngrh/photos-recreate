@@ -88,14 +88,18 @@ struct GalleryView: View {
 }
 
 struct LibraryView: View {
+    @Environment(\.modelContext) var databaseContext
     
     @State var selectedItem: [PhotosPickerItem] = []
+    @State private var selectedIDs: [UUID] = []
+    @State private var showAdvancedDelete: Bool = false
+    @StateObject private var deleteSession = AdvancedDeleteSession()
+    
     @Binding var gallery:[ImageModel]
     @Binding var isSelectMode: Bool
     @Binding var selectedImageData: [ImageModel]
-    @Environment(\.modelContext) var databaseContext
-    @Query var items: [ImageModel]
     
+    @Query var items: [ImageModel]
     
     var body: some View {
         NavigationStack{
@@ -111,12 +115,8 @@ struct LibraryView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing){
                     Menu {
-                        
                         Button("Sort by Recently Added", action: {
-                            
-                        }
-                        )
-                        
+                        })
                         Button("Sort by Date Captured", action: {})
                         Divider()
                         Button("Both Libraries", action: {})
@@ -124,17 +124,16 @@ struct LibraryView: View {
                         Button("Shared Library", action: {})
                         Divider()
                         Button("Advanced Delete", action: {
-                            let selectedImageDatapp: [ImageModel] =
-                            gallery.filter { image in
-                                image.isSelected
-                            }
+                            deleteSession.selectedIDs = gallery
+                                .filter { $0.isSelected }
+                                .map { $0.id }
                             
-                            let selectedImageId: [UUID] = selectedImageDatapp.map(\.id)
-
+                            print("--- selectedIDs Library View ---")
+                            print("count: \(deleteSession.selectedIDs.count)")
+                            for id in deleteSession.selectedIDs { print(id) }
+                            print("-------------------")
                             
-                            // nanti kirim ini aja ke tempat uselectedImageId
-                            
-                            
+                            showAdvancedDelete = true
                         })
                         Button("Delete", action: {
                             
@@ -149,16 +148,11 @@ struct LibraryView: View {
                                     databaseContext.delete(item)
                                 }
                             }
-                            
                         })
-                        
-                        
-                        
                     }
                     label: {
                         Label("Options", systemImage: "line.3.horizontal.decrease")
                     }
-                    
                 }
                 ToolbarSpacer(placement: .topBarTrailing)
                 ToolbarItemGroup(placement: .topBarTrailing){
@@ -175,16 +169,15 @@ struct LibraryView: View {
                             isSelectMode.toggle()
                             print(isSelectMode)
                         }
-                        
                     }
-                    
-                    
-                    
-                    
                 }
             }.navigationTitle("Hello, world!")
                 .navigationSubtitle("Subtitle")
-            
+        }
+        .onAppear {
+            gallery.indices.forEach { index in
+                gallery[index].isSelected = false
+            }
         }
         .onChange(of: selectedItem) { _, _ in
             print("close")
@@ -201,6 +194,15 @@ struct LibraryView: View {
                 }
                 selectedItem.removeAll()
             }
+        }
+        .fullScreenCover(isPresented: $showAdvancedDelete, onDismiss: {
+            gallery.indices.forEach { index in
+                gallery[index].isSelected = false
+            }
+            deleteSession.selectedIDs = []
+        }) {
+            SwipeCardView(selectedIDs: deleteSession.selectedIDs)
+                .environmentObject(deleteSession)
         }
     }
 }

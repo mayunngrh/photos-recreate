@@ -6,61 +6,85 @@
 //
 
 import SwiftUI
+import SwiftData
 
-struct SwipeCardView : View{
-    @State private var images : [ImageModel] = ImageModel.imageSet
+struct SwipeCardView: View {
+    let selectedIDs: [UUID]
+
+    @Query private var allImages: [ImageModel]
+    @State private var allSortedImages: [ImageModel] = []
     @State private var currentIndex: Int = 0
-    @State private var showSummary: Bool = false
-    
-    private var remainingImages: ArraySlice<ImageModel> {
-        images[currentIndex...]
-    }
-    
-    var body: some View{
+    @State private var phase: ReviewPhase = .swiping
+
+    private let preloadCount = 3
+
+    var body: some View {
         VStack {
-            if showSummary {
-                SummaryView(images: images, onReset: {
-                    images = ImageModel.imageSet
-                    showSummary = false
+            switch phase {
+            case .swiping:
+                swipingView
+            case .maybeReviewing:
+                MaybeReviewView(images: $allSortedImages, onNext: {
+                    phase = .deleteConfirm
                 })
-            } else if currentIndex >= images.count {
-                Button("Review Result"){
-                    showSummary = true
-                }
-            } else{
-                ZStack{
-                    ForEach(remainingImages.indices.reversed(), id: \.self){ index in
-                        let stackPosition = index - currentIndex
-                        CardView(image: images[index], index: index, onSwiped: { bucket in
-                            handleSwipe(bucket: bucket)
-                        })
-                        .scaleEffect(1 - CGFloat(stackPosition) * 0.03)
-                        .offset(y: CGFloat(stackPosition) * 8)
-                    }
-                }
+            case .deleteConfirm:
+                Text("Delete Confirm — coming soon")
+            case .keepOptions:
+                Text("Keep Options — coming soon")
             }
-            
-            
+
             // Debug button
-            Button("Print images (\(images.count))") {
+            Button("Print images (\(allSortedImages.count))") {
                 print("--- images array ---")
-                for (i, img) in images.enumerated() {
-                    print("[\(i)] \(img.name) bucket: \(img.bucket?.rawValue ?? "nil")")
+                for (i, img) in allSortedImages.enumerated() {
+                    print("[\(i)] \(img.name) bucket: \(String(describing: img.bucket))")
                 }
+                print("currentIndex: \(currentIndex)")
                 print("--------------------")
             }
             .padding(.top, 20)
             .font(.caption)
         }
+        .onAppear {
+            if allSortedImages.isEmpty {
+                allSortedImages = allImages.filter { selectedIDs.contains($0.id) }
+            }
+        }
+        .onChange(of: allImages) { _, newImages in
+            if allSortedImages.isEmpty {
+                allSortedImages = newImages.filter { selectedIDs.contains($0.id) }
+            }
+        }
     }
-    
-    private func handleSwipe(bucket: BucketType) {
-        guard currentIndex < images.count else { return }
-        images[currentIndex].bucket = bucket
-        currentIndex += 1
-    }
-}
 
-#Preview {
-    SwipeCardView()
+    private var swipingView: some View {
+        ZStack {
+            if currentIndex >= allSortedImages.count {
+                // all done
+                Button("Review Photos") {
+                    phase = .maybeReviewing
+                }
+                .buttonStyle(.borderedProminent)
+            } else {
+                // show only next 3 cards from currentIndex
+                let endIndex = min(currentIndex + preloadCount, allSortedImages.count)
+                let visibleRange = (currentIndex..<endIndex).reversed()
+
+                ForEach(Array(visibleRange), id: \.self) { index in
+                    let stackPosition = index - currentIndex
+                    CardView(image: allSortedImages[index], onSwiped: { bucket in
+                        handleSwipe(bucket: bucket)
+                    })
+                    .scaleEffect(1 - CGFloat(stackPosition) * 0.03)
+                    .offset(y: CGFloat(stackPosition) * 8)
+                }
+            }
+        }
+    }
+
+    private func handleSwipe(bucket: BucketType) {
+        guard currentIndex < allSortedImages.count else { return }
+        allSortedImages[currentIndex].bucket = bucket
+        currentIndex += 1  
+    }
 }

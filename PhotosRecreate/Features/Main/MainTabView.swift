@@ -19,8 +19,6 @@ struct MainTabView: View {
     
     var body: some View {
         TabView{
-
-            
             Tab("Library", systemImage: "photo.fill.on.rectangle.fill") {
                 LibraryView(gallery: $imageData,  isSelectMode: $isSelectMode, selectedImageData: $selectedImageData)
             }
@@ -29,9 +27,9 @@ struct MainTabView: View {
                 CollectionView()
             }
             
-            Tab("Delete System", systemImage: "photo.stack") {
-                SwipeCardView()
-            }
+//            Tab("Delete System", systemImage: "photo.stack") {
+//                SwipeCardView()
+//            }
             
             Tab(role: .search){
                 Text("Coming Soon! :)")

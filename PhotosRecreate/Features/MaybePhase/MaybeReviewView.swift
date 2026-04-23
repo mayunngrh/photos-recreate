@@ -111,7 +111,7 @@ struct MaybeReviewView :View {
             if let uiImage = UIImage(named: item.name) {
                 let imageRatio = uiImage.size.width / uiImage.size.height
 
-                Image(item.name)
+                Image(uiImage: UIImage(data: item.imageData) ?? UIImage())
                     .resizable()
                     .aspectRatio(imageRatio, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 16))

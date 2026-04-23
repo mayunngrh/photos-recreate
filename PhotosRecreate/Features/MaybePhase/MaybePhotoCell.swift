@@ -19,7 +19,7 @@ struct MaybePhotoCell : View{
     
     var body: some View {
         ZStack(alignment: .topTrailing){
-            Image(item.name)
+            Image(uiImage: UIImage(data: item.imageData) ?? UIImage())
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(minWidth: 0, maxWidth: .infinity)
