@@ -20,6 +20,11 @@
             landmarkType = "13">
          </BreakpointContent>
       </BreakpointProxy>
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> ba57a2f14df1e121c95ccbc6c13d943e202bcf5d
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
@@ -30,8 +35,13 @@
             filePath = "PhotosRecreate/Features/DeleteTinder/CardView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
+<<<<<<< HEAD
             startingLineNumber = "67"
             endingLineNumber = "67"
+=======
+            startingLineNumber = "66"
+            endingLineNumber = "66"
+>>>>>>> ba57a2f14df1e121c95ccbc6c13d943e202bcf5d
             landmarkName = "dragGesture"
             landmarkType = "24">
          </BreakpointContent>
@@ -52,5 +62,9 @@
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> ba57a2f14df1e121c95ccbc6c13d943e202bcf5d
    </Breakpoints>
 </Bucket>
