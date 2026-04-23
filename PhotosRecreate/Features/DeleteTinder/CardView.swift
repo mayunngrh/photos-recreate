@@ -22,6 +22,7 @@ struct CardView: View {
                 .scaledToFill()
                 .frame(width: 350, height: 520)
                 .clipShape(RoundedRectangle (cornerRadius: 20))
+            
             dragOverlay
             
             // Debug info
@@ -84,6 +85,7 @@ struct CardView: View {
             onSwiped(bucket)
         }
     }
+    
     private var dragOverlay: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
