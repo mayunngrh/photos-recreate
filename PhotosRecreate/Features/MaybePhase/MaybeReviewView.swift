@@ -11,6 +11,8 @@ struct MaybeReviewView :View {
     @Binding var images: [ImageModel]
     var onNext : () -> Void
     
+    @Namespace private var namespace
+    
     @State private var isSelectionMode: Bool = false
     @State private var selectedIDs: Set<UUID> = []
     @State private var fullscreenImage :ImageModel? = nil
@@ -21,32 +23,20 @@ struct MaybeReviewView :View {
     }
     
     let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
+        GridItem(.flexible(),spacing: 2),
+        GridItem(.flexible(),spacing: 2),
+        GridItem(.flexible(),spacing: 2),
     ]
     
     var body: some View {
         NavigationView{
             ZStack{
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 8) {
-                        ForEach(maybeImages) { item in
-                            MaybePhotoCell(
-                                item: item,
-                                isSelectionMode: isSelectionMode,
-                                isSelected: selectedIDs.contains(item.id),
-                                onHold: { fullscreenImage = item },
-                                onTap: {handleOnTap(item: item)}
-                            )
-                        }
-                    }
-                    .padding()
-                }
+                photoGrid
                 
                 if let photo = fullscreenImage {
-                    fullscreenOverlay(photo)
-                }
+                       fullscreenOverlay(photo)
+                           .zIndex(999)
+                   }
                 
                 if isSelectionMode {
                     keepButton
@@ -87,17 +77,52 @@ struct MaybeReviewView :View {
         }
         
     }
+    private var photoGrid: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(maybeImages) { item in
+                    MaybePhotoCell(
+                        item: item,
+                        isSelectionMode: isSelectionMode,
+                        isSelected: selectedIDs.contains(item.id),
+                        onHold: {
+                            withAnimation(.spring(duration: 0.4)) {
+                                fullscreenImage = item
+                            }
+                        },
+                        onTap: { handleOnTap(item: item) },
+                        namespace: namespace,
+                        isFullscreen: fullscreenImage?.id == item.id
+                    )
+                }
+            }
+        }
+    }
     private func fullscreenOverlay(_ item: ImageModel) -> some View {
         ZStack {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
-                .onTapGesture { fullscreenImage = nil }
+                .onTapGesture {
+                    withAnimation(.spring(duration: 0.4)) {
+                        fullscreenImage = nil
+                    }
+                }
             
-            Image(item.name)
-                .resizable()
-                .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .padding(24)
+            if let uiImage = UIImage(named: item.name) {
+                let imageRatio = uiImage.size.width / uiImage.size.height
+
+                Image(item.name)
+                    .resizable()
+                    .aspectRatio(imageRatio, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .padding(24)
+                    .matchedGeometryEffect(id: item.id, in: namespace)
+                    .onTapGesture {
+                        withAnimation(.spring(duration: 0.4)) {
+                            fullscreenImage = nil
+                        }
+                    }
+            }
         }
     }
     private var keepButton: some View {
@@ -140,7 +165,7 @@ struct MaybeReviewView :View {
     private func applyKeep() {
         for index in images.indices {
             guard images[index].bucket == .maybe else { continue }
-
+            
             if selectedIDs.contains(images[index].id) {
                 images[index].bucket = .keep
             } else {
@@ -152,13 +177,15 @@ struct MaybeReviewView :View {
     }
     private func handleOnTap(item: ImageModel) {
         if isSelectionMode {
-            if selectedIDs.contains(item.id){
+            if selectedIDs.contains(item.id) {
                 selectedIDs.remove(item.id)
-            } else{
+            } else {
                 selectedIDs.insert(item.id)
             }
-        } else{
-            fullscreenImage = item
+        } else {
+            withAnimation(.spring(duration: 0.4)) {  
+                fullscreenImage = item
+            }
         }
     }
 }

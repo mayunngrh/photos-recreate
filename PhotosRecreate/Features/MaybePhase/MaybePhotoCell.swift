@@ -12,7 +12,10 @@ struct MaybePhotoCell : View{
     var isSelected : Bool
     var onHold : () -> Void
     var onTap: () -> Void
-
+    var namespace: Namespace.ID
+    var isFullscreen: Bool
+    
+    @State private var isPressed: Bool = false
     
     var body: some View {
         ZStack(alignment: .topTrailing){
@@ -21,7 +24,7 @@ struct MaybePhotoCell : View{
                 .aspectRatio(contentMode: .fill)
                 .frame(minWidth: 0, maxWidth: .infinity)
                 .aspectRatio(1, contentMode: .fill)
-                .clipShape(RoundedRectangle(cornerRadius: 3))
+                .clipped()
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.green.opacity(isSelected ? 0.3 : 0))
@@ -36,7 +39,18 @@ struct MaybePhotoCell : View{
                     .transition(.scale)
             }
         }
-        .onTapGesture { onTap() }
-        .onLongPressGesture { onHold() }
+        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .opacity(isFullscreen ? 0 : 1)
+        .matchedGeometryEffect(id: item.id, in: namespace)
+        .onTapGesture {
+            isPressed = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                isPressed = false
+            }
+            onTap()
+        }
+        .onLongPressGesture {
+            onHold()
+        }
     }
 }
