@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct PhotosRecreateApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
-        }
+        }.modelContainer(for: ImageModel.self)
     }
 }
 

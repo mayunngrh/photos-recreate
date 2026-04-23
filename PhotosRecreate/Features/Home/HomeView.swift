@@ -71,7 +71,7 @@ struct HomeView: View {
                                 Text(filter.rawValue.capitalized)
                                     .tag(filter)
                             }
-                        }.onChange(of: selectedFilter) { newValue in
+                        }.onChange(of: selectedFilter) { _, newValue in
                             images.shuffle()
                         }
                         
@@ -82,7 +82,7 @@ struct HomeView: View {
                                     Label(category.rawValue.capitalized, systemImage: category.iconName)
                                         .padding()
                                 }
-                            }.onChange(of: selectedFilter) { newValue in
+                            }.onChange(of: selectedFilter) { _, newValue in
                                 images.shuffle()
                             }
                         } label: {
