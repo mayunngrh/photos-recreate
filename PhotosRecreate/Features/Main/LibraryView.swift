@@ -207,13 +207,7 @@ struct LibraryView: View {
     }
 }
 
-
-
-
-
-
 #Preview {
     MainTabView()
 }
-
 

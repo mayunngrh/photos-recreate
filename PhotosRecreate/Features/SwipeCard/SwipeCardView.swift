@@ -11,6 +11,7 @@ import SwiftData
 struct SwipeCardView: View {
     let selectedIDs: [UUID]
 
+    @Environment(\.dismiss) private var dismiss
     @Query private var allImages: [ImageModel]
     @State private var allSortedImages: [ImageModel] = []
     @State private var currentIndex: Int = 0
@@ -23,27 +24,34 @@ struct SwipeCardView: View {
             switch phase {
             case .swiping:
                 swipingView
+                
             case .maybeReviewing:
                 MaybeReviewView(images: $allSortedImages, onNext: {
-                    phase = .deleteConfirm
+                    phase = .deleteReview
                 })
-            case .deleteConfirm:
-                Text("Delete Confirm — coming soon")
-            case .keepOptions:
-                Text("Keep Options — coming soon")
+
+            case .deleteReview:
+                DeleteReviewView(images: $allSortedImages, onNext: {
+                    phase = .keepReviewing
+                })
+
+            case .keepReviewing:
+                KeepReviewView(images: $allSortedImages, onDone: {
+                    dismiss()
+                })
             }
 
             // Debug button
-            Button("Print images (\(allSortedImages.count))") {
-                print("--- images array ---")
-                for (i, img) in allSortedImages.enumerated() {
-                    print("[\(i)] \(img.name) bucket: \(String(describing: img.bucket))")
-                }
-                print("currentIndex: \(currentIndex)")
-                print("--------------------")
-            }
-            .padding(.top, 20)
-            .font(.caption)
+//            Button("Print images (\(allSortedImages.count))") {
+//                print("--- images array ---")
+//                for (i, img) in allSortedImages.enumerated() {
+//                    print("[\(i)] \(img.name) bucket: \(String(describing: img.bucket))")
+//                }
+//                print("currentIndex: \(currentIndex)")
+//                print("--------------------")
+//            }
+//            .padding(.top, 20)
+//            .font(.caption)
         }
         .onAppear {
             if allSortedImages.isEmpty {
@@ -60,13 +68,11 @@ struct SwipeCardView: View {
     private var swipingView: some View {
         ZStack {
             if currentIndex >= allSortedImages.count {
-                // all done
                 Button("Review Photos") {
                     phase = .maybeReviewing
                 }
                 .buttonStyle(.borderedProminent)
             } else {
-                // show only next 3 cards from currentIndex
                 let endIndex = min(currentIndex + preloadCount, allSortedImages.count)
                 let visibleRange = (currentIndex..<endIndex).reversed()
 

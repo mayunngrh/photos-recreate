@@ -38,8 +38,6 @@ class ImageModel: Identifiable{
         ImageModel(name: "photo_18",imageData: Data()),
         ImageModel(name: "photo_19",imageData: Data()),
         ImageModel(name: "photo_20",imageData: Data()),
-
-        
     ]
 }
 
