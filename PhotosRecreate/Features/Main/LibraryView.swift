@@ -2,216 +2,177 @@
 //  LibraryView.swift
 //  PhotosRecreate
 //
-//  Created by Alex on 22/04/26.
-//
-
 
 import SwiftUI
 import PhotosUI
 import SwiftData
 
+extension UUID: @retroactive Identifiable {
+    public var id: UUID { self }
+}
 
-
+// MARK: - PhotoView
 struct PhotoView: View {
-    @Binding var isSelectMode: Bool
-    @Binding var selectedImageData: [ImageModel]
-    @Binding var image: ImageModel
-    @State private var presentImage: Bool = false
-    
+    let image: ImageModel
+    let isSelectMode: Bool
+    @Binding var selectedIDs: Set<UUID>
+    @Binding var tappedImageID: ImageModel.ID?
+
+    var isSelected: Bool { selectedIDs.contains(image.id) }
+
     var body: some View {
-        if let uiImage: UIImage = UIImage(data: image.imageData)
-        {
+        if let uiImage = UIImage(data: image.imageData) {
             Image(uiImage: uiImage)
                 .resizable()
-                .aspectRatio(1, contentMode:.fill)
+                .aspectRatio(1, contentMode: .fill)
                 .clipped()
                 .cornerRadius(4)
-                .opacity(image.isSelected ? 0.3 : 1)
-                .overlay(alignment: .bottomTrailing){
-                    
-                    if image.isSelected {
+                .opacity(isSelected ? 0.3 : 1)
+                .overlay(alignment: .bottomTrailing) {
+                    if isSelected {
                         ZStack {
                             Circle()
                                 .fill(Color.blue)
                                 .stroke(Color.white, lineWidth: 2)
                                 .frame(width: 20, height: 20)
-                                .offset(x: -10,y: -10)
+                                .offset(x: -10, y: -10)
                             Image(systemName: "checkmark")
                                 .foregroundStyle(.white)
-                                .frame(width: 10, height: 10)
                                 .font(.system(size: 10, weight: .bold))
-                                .offset(x: -10,y: -10)
+                                .offset(x: -10, y: -10)
                         }
                     }
-                    
                 }
-            
                 .onTapGesture {
                     if isSelectMode {
-                        image.isSelected.toggle()
+                        if isSelected { selectedIDs.remove(image.id) }
+                        else { selectedIDs.insert(image.id) }
                     } else {
-                        presentImage = true
+                        tappedImageID = image.id
                     }
-                    
-                }.fullScreenCover(isPresented: $presentImage) {
-                    ImagePopUpView(imageId: $image.name, isPresented: $presentImage, image: $image)
-                        .presentationDragIndicator(.visible)
                 }
         }
-        
-        
     }
-    
 }
 
+// MARK: - GalleryView
 struct GalleryView: View {
-    @Binding var gallery: [ImageModel]
-    @Binding var isSelectMode: Bool
-    @Binding var selectedImageData: [ImageModel]
+    let images: [ImageModel]
+    let isSelectMode: Bool
+    @Binding var selectedIDs: Set<UUID>
+    @Binding var tappedImageID: ImageModel.ID?
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2)
+    ]
+
     var body: some View {
-        let columns = [GridItem(.flexible(), spacing: 2),
-                       GridItem(.flexible(), spacing: 2),
-                       GridItem(.flexible(), spacing: 2)
-        ]
-        LazyVGrid(columns: columns,spacing: 2,
-        ) {
-            @State  var selectedItems: [String] = []
-            ForEach($gallery) {
-                $itemImage in
-                PhotoView(isSelectMode: $isSelectMode,
-                          selectedImageData: $selectedImageData,image: $itemImage)
+        LazyVGrid(columns: columns, spacing: 2) {
+            ForEach(images) { image in
+                PhotoView(
+                    image: image,
+                    isSelectMode: isSelectMode,
+                    selectedIDs: $selectedIDs,
+                    tappedImageID: $tappedImageID
+                )
             }
         }
-        
     }
-    
 }
 
+// MARK: - LibraryView
 struct LibraryView: View {
-    
-    @State var selectedItem: [PhotosPickerItem] = []
-    @Binding var gallery:[ImageModel]
-    @Binding var isSelectMode: Bool
-    @Binding var selectedImageData: [ImageModel]
-    @Environment(\.modelContext) var databaseContext
-    @Query var items: [ImageModel]
-    
-    
+    @Query(sort: \ImageModel.name) var images: [ImageModel]
+    @Environment(\.modelContext) var context
+
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var isSelectMode = false
+    @State private var selectedIDs: Set<UUID> = []
+    @State private var tappedImageID: ImageModel.ID?
+    @State private var showAddMultipleToAlbum = false
+
     var body: some View {
-        NavigationStack{
-            ScrollView{
-                GalleryView(gallery: $gallery, isSelectMode: $isSelectMode, selectedImageData: $selectedImageData)
+        NavigationStack {
+            ScrollView {
+                GalleryView(
+                    images: images,
+                    isSelectMode: isSelectMode,
+                    selectedIDs: $selectedIDs,
+                    tappedImageID: $tappedImageID
+                )
             }
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading){
-                    PhotosPicker(selection: $selectedItem, matching: .images) {
+                ToolbarItem(placement: .topBarLeading) {
+                    PhotosPicker(selection: $selectedItems, matching: .images) {
                         Label("Choose Photo", systemImage: "photo")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing){
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        
-                        Button("Sort by Recently Added", action: {
-                            
+                        Button("Sort by Recently Added") {}
+                        Button("Sort by Date Captured") {}
+                        Divider()
+                        Button("Both Libraries") {}
+                        Button("Personal Library") {}
+                        Button("Shared Library") {}
+                        Button("Add To Library") {
+                            showAddMultipleToAlbum.toggle()
                         }
-                        )
-                        
-                        Button("Sort by Date Captured", action: {})
                         Divider()
-                        Button("Both Libraries", action: {})
-                        Button("Personal Library", action: {})
-                        Button("Shared Library", action: {})
-                        Divider()
-                        Button("Advanced Delete", action: {
-                            let selectedImageDatapp: [ImageModel] =
-                            gallery.filter { image in
-                                image.isSelected
-                            }
-                            
-                            let selectedImageId: [UUID] = selectedImageDatapp.map(\.id)
-
-                            
-                            // nanti kirim ini aja ke tempat uselectedImageId
-                            
-                            
-                        })
-                        Button("Delete", action: {
-                            
-                            let selectedImageDatapp: [ImageModel] =
-                            gallery.filter { image in
-                                image.isSelected
-                            }
-                            
-                            for item in selectedImageDatapp{
-                                if let index = gallery.firstIndex(of: item) {
-                                    gallery.remove(at: index)
-                                    databaseContext.delete(item)
-                                }
-                            }
-                            
-                        })
-                        
-                        
-                        
-                    }
-                    label: {
+                        Button("Delete", role: .destructive) { deleteSelected() }
+                    } label: {
                         Label("Options", systemImage: "line.3.horizontal.decrease")
                     }
-                    
                 }
                 ToolbarSpacer(placement: .topBarTrailing)
-                ToolbarItemGroup(placement: .topBarTrailing){
+                ToolbarItem(placement: .topBarTrailing) {
                     if isSelectMode {
-                        Image(systemName: "xmark").onTapGesture {
-                            isSelectMode.toggle()
-                            gallery.indices.forEach { index in
-                                gallery[index].isSelected = false
-                            }
-                        }
+                        Button {
+                            isSelectMode = false
+                            selectedIDs.removeAll()
+                        } label: { Image(systemName: "xmark") }
+                    } else {
+                        Button("Select") { isSelectMode = true }
                     }
-                    else {
-                        Text("Select").onTapGesture {
-                            isSelectMode.toggle()
-                            print(isSelectMode)
-                        }
-                        
-                    }
-                    
-                    
-                    
-                    
                 }
-            }.navigationTitle("Hello, world!")
-                .navigationSubtitle("Subtitle")
-            
+            }
+            .navigationTitle("Library")
+            .navigationSubtitle("\(images.count) photos")
         }
-        .onChange(of: selectedItem) { _, _ in
-            print("close")
+        .fullScreenCover(item: $tappedImageID) { id in
+            ImagePopUpView(initialID: id)
+        }
+        .sheet(isPresented: $showAddMultipleToAlbum) {
+            AddMultipleToAlbumSheet(selectedIDs: $selectedIDs)
+        }
+        .onChange(of: selectedItems) { _, _ in
             Task {
-                if !selectedItem.isEmpty{
-                    for item in selectedItem {
-                        if let data = try? await item.loadTransferable(type: Data.self) {
-                            let newImage = ImageModel(name: UUID().uuidString, imageData: data)
-                            databaseContext.insert(newImage)
-                            gallery.append(newImage)
-                            print(databaseContext.insert(newImage))
-                        }
+                for item in selectedItems {
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        context.insert(ImageModel(name: UUID().uuidString, imageData: data))
                     }
                 }
-                selectedItem.removeAll()
+                selectedItems.removeAll()
             }
         }
     }
+
+    private func deleteSelected() {
+        images
+            .filter { selectedIDs.contains($0.id) }
+            .forEach { context.delete($0) }
+        selectedIDs.removeAll()
+        isSelectMode = false
+    }
+    
+//    private func addToAlbumSelected() {
+//        images
+//            .filter { selectedIDs.contains($0.id) }
+//            .forEach { context.delete($0) }
+//        selectedIDs.removeAll()
+//        isSelectMode = false
+//    }
 }
-
-
-
-
-
-
-#Preview {
-    MainTabView()
-}
-
-

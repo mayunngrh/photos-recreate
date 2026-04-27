@@ -2,147 +2,165 @@
 //  ImagePopUpView.swift
 //  PhotosRecreate
 //
-//  Created by Alex on 22/04/26.
-//
 
 import SwiftUI
-
-//delete
-
-struct ImagePopUpScrollView: View {
-    @State var id : String
-    var body: some View {
-        Image(id)
-            .resizable()
-            .aspectRatio(1, contentMode:.fill)
-            .clipped()
-            .cornerRadius(4)
-    }
-}
+import SwiftData
 
 struct ImagePopUpView: View {
-    @Binding var imageId : String
-    @Binding var isPresented: Bool
-    @Binding var image: ImageModel
+
+    @Query var gallery: [ImageModel]
+    @Environment(\.modelContext) var context
+    @State private var showAddToAlbum = false
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var selectedID: ImageModel.ID
+
+    init(initialID: ImageModel.ID) {
+        self._selectedID = State(initialValue: initialID)
+    }
+
     var body: some View {
-        let rows = [GridItem(.fixed(60))]
-        
-        NavigationStack{
-            VStack{
-                if image.imageData != Data() {
-                    if let uiImage: UIImage = UIImage(data: image.imageData)
-                    {
+        NavigationStack {
+            TabView(selection: $selectedID) {
+                ForEach(gallery) { item in
+                    if let uiImage = UIImage(data: item.imageData) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .tag(item.id)
                     }
+                }
+            }
+            .overlay(alignment: .bottom) {thumbnailStrip}
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .toolbarTitleDisplayMode(.inline)
+            .navigationTitle(currentImage?.name ?? "")
+            .navigationSubtitle("\(currentIndex + 1) of \(gallery.count)")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Close", systemImage: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showAddToAlbum = true
+                    } label: {
+                        Label("AddToAlbum", systemImage: "rectangle.stack.badge.plus")
+                    }
+                }
 
-                }
-                else{
-                    Image(imageId)
-                        .resizable()
-                        .scaledToFit()
-                }
-                
-                
-            }.toolbarTitleDisplayMode(.inline)
-                .toolbar{
-                    ToolbarItem(placement: .topBarLeading){
-                        Button(action: {
-                            self.isPresented.toggle()
-                        }) {
-                            Label("Close", systemImage: "xmark")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {} label: {
+                            Label("Copy", systemImage: "document.on.document")
                         }
+                        Button {} label: {
+                            Label("Duplicate", systemImage: "plus.square.on.square")
+                        }
+                        Button {} label: {
+                            Label("Hide", systemImage: "eye.slash")
+                        }
+                        Button {} label: {
+                            Label("Slideshow", systemImage: "play.rectangle")
+                        }
+                        Divider()
+                        Button {
+                            showAddToAlbum = true
+                        } label: {
+                            Label("Add to Album", systemImage: "rectangle.stack.badge.plus")
+                        }
+                        Button {} label: {
+                            Label("Move to Shared Library", systemImage: "person.2")
+                        }
+                        Divider()
+                        Button {} label: {
+                            Label("Adjust Date & Time", systemImage: "calendar.badge.clock")
+                        }
+                        Button {} label: {
+                            Label("Adjust Location", systemImage: "mappin.circle")
+                        }
+                        Divider()
+                        Button(role: .destructive) {
+                            deleteCurrentImage()
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    } label: {
+                        Label("Options", systemImage: "line.3.horizontal.decrease")
                     }
-                    
-                    ToolbarItem(placement: .topBarTrailing){
-                        Menu {
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Copy")
-                                    Image(systemName: "document.on.document")
-                                }
-                            }
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Duplicate")
-                                    Image(systemName: "plus.square.on.square")
-                                }
-                            }
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Hide")
-                                    Image(systemName: "eye.slash")
-                                }
-                            }
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Slideshow")
-                                    Image(systemName: "play.rectangle")
-                                }
-                            }
-                            Divider()
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Add to Album")
-                                    Image(systemName: "rectangle.stack.badge.plus")
-                                }
-                            }
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Move to Shared Library")
-                                    Image(systemName: "person.2")
-                                }
-                            }
-                            Divider()
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Adjust Date & Time")
-                                    Image(systemName: "calendar.badge.clock")
-                                }
-                            }
-                            Button(action: {}) {
-                                HStack {
-                                    Text("Adjust Location")
-                                    Image(systemName: "mappin.circle")
-                                }
-                            }
-                            Divider()
-                            Button(role: .destructive, action: {}) {
-                                HStack {
-                                    Text("Delete").foregroundStyle(.red)
-                                    Image(systemName: "trash")
-                                }
-                            }
-                        }
-                        label: {
-                            Label("Options", systemImage: "line.3.horizontal.decrease")
-                        }
-                    }
-                    ToolbarSpacer(placement: .topBarTrailing)
-                    
-                }.navigationTitle("Hello, world!")
-                .navigationSubtitle("Subtitle")
+                }
+            }
         }
-        .overlay(){
-            ScrollView(.horizontal){
-                LazyHGrid(rows: rows) {
-                    @State  var selectedItems: [Image] = []
-// dothis
-//                    ForEach(images, id: \.self) {
-//                        image in
-////                        Image(image)
-//                        ImagePopUpScrollView(id: image)
-//                        .onTapGesture {
-//                            imageId = image
-//                            }
-//                    }
+        .sheet(isPresented: $showAddToAlbum) {
+            AddToAlbumSheet(image: currentImage)
+        }
+
+    }
+
+    // MARK: - Thumbnail strip
+
+    private var thumbnailStrip: some View {
+        let rows = [GridItem(.fixed(60))]
+        
+        return ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHGrid(rows: rows, spacing: 4) {
+                    ForEach(gallery) { item in
+                        if let uiImage = UIImage(data: item.imageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(1, contentMode: .fill)
+                                .frame(width: 60, height: 60)
+                                .clipped()
+                                .cornerRadius(4)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.white, lineWidth: item.id == selectedID ? 2 : 0)
+                                )
+                                .id(item.id)
+                                .onTapGesture {
+                                    withAnimation { selectedID = item.id }
+                                }
+                        }
+                    }
                 }
-            }.offset(y:300)
+                .padding(.horizontal, 8)
+            }
+            .frame(height: 76)
+            .background(.ultraThinMaterial)
+            .onChange(of: selectedID) { _, newID in
+                withAnimation { proxy.scrollTo(newID, anchor: .center) }
+            }
+        }
+        .padding(.bottom, 16)
+    }
+
+    // MARK: - Helpers
+// computed property
+    private var currentImage: ImageModel? {
+        gallery.first { $0.id == selectedID }
+    }
+
+    private var currentIndex: Int {
+        gallery.firstIndex { $0.id == selectedID } ?? 0
+    }
+
+    private func deleteCurrentImage() {
+        // Step to a neighbour before deleting so the TabView doesn't show a blank page
+        if let image = currentImage {
+            if currentIndex > 0 {
+                selectedID = gallery[currentIndex - 1].id
+            } else if gallery.count > 1 {
+                selectedID = gallery[currentIndex + 1].id
+            } else {
+                // Last image deleted — close the view
+//                isPresented = false
+            }
+            context.delete(image)
         }
     }
 }
-
-
-
-

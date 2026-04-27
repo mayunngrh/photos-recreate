@@ -22,7 +22,7 @@ struct MainTabView: View {
 
             
             Tab("Library", systemImage: "photo.fill.on.rectangle.fill") {
-                LibraryView(gallery: $imageData,  isSelectMode: $isSelectMode, selectedImageData: $selectedImageData)
+                LibraryView()
             }
             
             Tab("Collection", systemImage: "photo.stack") {
