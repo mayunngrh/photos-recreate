@@ -32,15 +32,16 @@ class ImageModel: Identifiable, Equatable {
     
     static var imageSet:[ImageModel] = [
         ImageModel(name: "photo_10",imageData: Data()),
-               ImageModel(name: "photo_11",imageData: Data()),
-               ImageModel(name: "photo_12",imageData: Data()),
-               ImageModel(name: "photo_13",imageData: Data()),
-               ImageModel(name: "photo_14",imageData: Data()),
-               ImageModel(name: "photo_15",imageData: Data()),
-               ImageModel(name: "photo_16",imageData: Data()),
-               ImageModel(name: "photo_17",imageData: Data()),
-               ImageModel(name: "photo_18",imageData: Data()),
-               ImageModel(name: "photo_19",imageData: Data()),
-               ImageModel(name: "photo_20",imageData: Data()),
+
+        ImageModel(name: "photo_11",imageData: Data()),
+        ImageModel(name: "photo_12",imageData: Data()),
+        ImageModel(name: "photo_13",imageData: Data()),
+        ImageModel(name: "photo_14",imageData: Data()),
+        ImageModel(name: "photo_15",imageData: Data()),
+        ImageModel(name: "photo_16",imageData: Data()),
+        ImageModel(name: "photo_17",imageData: Data()),
+        ImageModel(name: "photo_18",imageData: Data()),
+        ImageModel(name: "photo_19",imageData: Data()),
+        ImageModel(name: "photo_20",imageData: Data()),
     ]
 }

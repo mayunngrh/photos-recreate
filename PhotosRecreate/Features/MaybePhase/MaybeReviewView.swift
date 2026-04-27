@@ -108,12 +108,10 @@ struct MaybeReviewView :View {
                     }
                 }
             
-            if let uiImage = UIImage(named: item.name) {
-                let imageRatio = uiImage.size.width / uiImage.size.height
-
-                Image(item.name)
+            if let uiImage = UIImage(data: item.imageData) {
+                Image(uiImage: UIImage(data: item.imageData) ?? UIImage())
                     .resizable()
-                    .aspectRatio(imageRatio, contentMode: .fit)
+                    .scaledToFit()
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(24)
                     .matchedGeometryEffect(id: item.id, in: namespace)
@@ -148,7 +146,12 @@ struct MaybeReviewView :View {
         VStack {
             Spacer()
             Button {
-                
+                for index in images.indices {
+                    if images[index].bucket == .maybe {
+                        images[index].bucket = .delete
+                    }
+                }
+                onNext() 
             } label: {
                 Text("Next")
                     .font(.headline)
@@ -174,6 +177,7 @@ struct MaybeReviewView :View {
         }
         isSelectionMode = false
         selectedIDs = []
+        onNext()
     }
     private func handleOnTap(item: ImageModel) {
         if isSelectionMode {

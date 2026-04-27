@@ -9,43 +9,32 @@ import SwiftUI
 
 struct CardView: View {
     let image: ImageModel
-    let index: Int
+    let cachedImage: UIImage?
     var onSwiped: (BucketType) -> Void
     
     @State private var overlayType: BucketType? = nil
     @State private var dragOffset: CGSize = .zero
-    
+    @State private var hasSwipped: Bool = false
+
     var body: some View {
-        ZStack{
-            Image(image.name)
+        ZStack {
+            Image(uiImage: cachedImage ?? UIImage(data: image.imageData) ?? UIImage())
                 .resizable()
                 .scaledToFill()
-                .frame(width: 350, height: 520)
-                .clipShape(RoundedRectangle (cornerRadius: 20))
+                .frame(width: 300, height: 420)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             
             dragOverlay
-            
-            // Debug info
-            VStack {
-                Spacer()
-                Text("[\(index)] \(image.name)")
-                    .font(.caption.bold())
-                    .foregroundColor(.white)
-                    .padding(6)
-                    .background(.black.opacity(0.6))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding(.bottom, 12)
-            }
-            .frame(width: 350, height: 520)
         }
         .offset(dragOffset)
         .rotationEffect(Angle(degrees: dragOffset.width / 20))
         .gesture(dragGesture)
     }
     
-    private var dragGesture : some Gesture {
+    private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
+                guard !hasSwipped else { return }
                 dragOffset = value.translation
                 withAnimation(.easeInOut(duration: 0.2)) {
                     if value.translation.height < -30 {
@@ -60,6 +49,7 @@ struct CardView: View {
                 }
             }
             .onEnded { value in
+                guard !hasSwipped else { return }
                 let h = value.translation.width
                 let v = value.translation.height
                 
@@ -77,7 +67,9 @@ struct CardView: View {
                 }
             }
     }
+    
     private func flyOff(x: CGFloat, y: CGFloat, bucket: BucketType) {
+        hasSwipped = true 
         withAnimation(.easeOut(duration: 0.3)) {
             dragOffset = CGSize(width: x, height: y)
         }
@@ -91,32 +83,26 @@ struct CardView: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.red.opacity(0.5))
                 .opacity(overlayType == .delete ? 1 : 0)
-            
             Text("DELETE")
                 .font(.largeTitle.bold())
                 .foregroundColor(.white)
                 .opacity(overlayType == .delete ? 1 : 0)
-            
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.green.opacity(0.5))
                 .opacity(overlayType == .keep ? 1 : 0)
-            
             Text("KEEP")
                 .font(.largeTitle.bold())
                 .foregroundColor(.white)
                 .opacity(overlayType == .keep ? 1 : 0)
-            
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.orange.opacity(0.5))
                 .opacity(overlayType == .maybe ? 1 : 0)
-            
             Text("MAYBE")
                 .font(.largeTitle.bold())
                 .foregroundColor(.white)
                 .opacity(overlayType == .maybe ? 1 : 0)
         }
-        .frame(width: 350, height: 520)
+        .frame(width: 300, height: 420)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
-

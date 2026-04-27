@@ -5,9 +5,9 @@
 //  Created by Mayun Suryatama on 21/04/26.
 //
 
-enum ReviewPhase{
+enum ReviewPhase {
     case swiping
     case maybeReviewing
-    case deleteConfirm
-    case keepOptions
+    case deleteReview
+    case keepReviewing
 }

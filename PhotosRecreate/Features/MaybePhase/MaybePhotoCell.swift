@@ -18,12 +18,14 @@ struct MaybePhotoCell : View{
     @State private var isPressed: Bool = false
     
     var body: some View {
-        ZStack(alignment: .topTrailing){
-            Image(item.name)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(minWidth: 0, maxWidth: .infinity)
-                .aspectRatio(1, contentMode: .fill)
+        ZStack(alignment: .topTrailing) {
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay(
+                    Image(uiImage: UIImage(data: item.imageData) ?? UIImage())
+                        .resizable()
+                        .scaledToFill()
+                )
                 .clipped()
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
@@ -42,15 +44,7 @@ struct MaybePhotoCell : View{
         .clipShape(RoundedRectangle(cornerRadius: 3))
         .opacity(isFullscreen ? 0 : 1)
         .matchedGeometryEffect(id: item.id, in: namespace)
-        .onTapGesture {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                isPressed = false
-            }
-            onTap()
-        }
-        .onLongPressGesture {
-            onHold()
-        }
+        .onTapGesture(perform: onTap)
+        .onLongPressGesture(perform: onHold)
     }
 }
