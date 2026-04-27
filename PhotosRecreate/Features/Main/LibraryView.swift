@@ -196,6 +196,7 @@ struct LibraryView: View {
             }
         }
         .fullScreenCover(isPresented: $showAdvancedDelete, onDismiss: {
+            gallery = items
             gallery.indices.forEach { index in
                 gallery[index].isSelected = false
             }

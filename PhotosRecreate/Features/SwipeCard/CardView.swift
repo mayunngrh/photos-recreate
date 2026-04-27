@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CardView: View {
     let image: ImageModel
+    let cachedImage: UIImage?
     var onSwiped: (BucketType) -> Void
     
     @State private var overlayType: BucketType? = nil
@@ -17,7 +18,7 @@ struct CardView: View {
 
     var body: some View {
         ZStack {
-            Image(uiImage: UIImage(data: image.imageData) ?? UIImage())
+            Image(uiImage: cachedImage ?? UIImage(data: image.imageData) ?? UIImage())
                 .resizable()
                 .scaledToFill()
                 .frame(width: 300, height: 420)
